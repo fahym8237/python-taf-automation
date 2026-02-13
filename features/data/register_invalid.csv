@@ -1,0 +1,4 @@
+firstname, lastname, email            , password, expect_firstname_error, expect_lastname_error, expect_email_error, expect_password_error
+         ,         , invalid          ,         , true                  , true                 , true              , true
+John     ,         , john@example.com , 123     , false                 , true                 , false             , true
+         , Smith   , smith@example.com, Pass123!, true                  , false                , false             , false

@@ -1,0 +1,3 @@
+valid_user:
+  email: "test@example.com"
+  password: "Pass123!"

@@ -1,0 +1,19 @@
+REQ-AUTH-LOGIN-001:
+  title: "Login - happy path"
+  features:
+    - features/ui/auth_login.feature
+
+REQ-AUTH-FORGOT-001:
+  title: "Forgot password - page validations and navigation"
+  features:
+    - features/ui/auth_forgot_password.feature
+
+REQ-AUTH-REGISTER-001:
+  title: "Register - validations"
+  features:
+    - features/ui/auth_register.feature
+
+REQ-BOOKING-CRUD-001:
+  title: "Booking API CRUD"
+  features:
+    - features/api/booking_crud.feature
