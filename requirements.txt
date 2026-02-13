@@ -17,9 +17,3 @@ python -m playwright install
 # system dependencies
 python -m playwright install --with-deps
 
-
-# Verify chromium-1208:
-python3 -c "from playwright.sync_api import sync_playwright; p=sync_playwright().start(); print('exe:', p.chromium.executable_path); b=p.chromium.launch(headless=True); b.close(); print('launch: OK'); p.stop()"
-
-#Verify chromium_headless_shell-1208:
-python3 -c "from playwright.sync_api import sync_playwright; p=sync_playwright().start(); b=p.chromium.launch(headless=False); b.close(); print('launch: OK'); p.stop()"
