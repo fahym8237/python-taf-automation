@@ -11,7 +11,7 @@ reports/
 allure-results/
 allure-report/
 playwright-report/
-test-results/
+target/
 
 # Logs
 *.log
