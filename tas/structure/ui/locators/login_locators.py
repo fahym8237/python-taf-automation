@@ -1,0 +1,6 @@
+LOGIN_FORM = "#form-login"
+EMAIL_INPUT = "#input-email"
+PASSWORD_INPUT = "#input-password"
+LOGIN_BUTTON = "xpath=//button[normalize-space()='Login']"
+FORGOTTEN_PASSWORD_LINK = "text=Forgotten Password"
+RETURNING_CUSTOMER_HEADER = "xpath=//h2[normalize-space()='Returning Customer']"

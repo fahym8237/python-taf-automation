@@ -21,6 +21,8 @@ class ScenarioContext:
     state: Dict[str, Any] = field(default_factory=dict)
     cleanup_stack: list = field(default_factory=list)
 
+    services: Dict[str, Any] = field(default_factory=dict)
+
     def add_cleanup(self, fn) -> None:
         self.cleanup_stack.append(fn)
 
@@ -32,3 +34,11 @@ class ScenarioContext:
                 fn()
             except Exception as e:
                 self.logger.warn("cleanup_failed", error=str(e))
+    
+    
+
+    def set_service(self, name: str, obj: Any) -> None:
+        self.services[name] = obj
+
+    def get_service(self, name: str) -> Any:
+        return self.services.get(name)

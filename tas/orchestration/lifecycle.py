@@ -1,4 +1,5 @@
 import hashlib
+import os
 from pathlib import Path
 
 from tas.orchestration.parallel import get_worker_id, new_run_id
@@ -6,6 +7,8 @@ from tas.orchestration.artifacts import ArtifactManager
 from tas.orchestration.logging import JsonlLogger, LogContext
 from tas.orchestration.runner_context import RunContext, ScenarioContext
 from tas.orchestration.tag_interpreter import TagInterpreter
+from tas.interaction.ui.ui_session import UiSession, UiSessionConfig
+
 
 class LifecycleManager:
     def __init__(self) -> None:
@@ -60,6 +63,23 @@ class LifecycleManager:
             logger=scenelog,
         )
 
+        # --- UI session creation based on tags ---
+        if tags.is_ui or tags.is_hybrid:
+            browser = (tags.browser or os.getenv("TAS_BROWSER") or "chromium").strip()
+            headless = (os.getenv("TAS_HEADLESS", "false").lower() == "true")
+            trace_mode = os.getenv("TAS_TRACE", "off").strip()
+
+            ui = UiSession(UiSessionConfig(
+                browser=browser,
+                headless=headless,
+                trace_mode=trace_mode,
+                artifacts_dir=scenario_root,
+            ))
+            ui.start()
+            behave_context.scenario_ctx.set_service("ui", ui)
+            scenelog.info("ui_session_started", browser=browser, headless=headless, trace_mode=trace_mode)
+
+
     def after_step(self, behave_context, step) -> None:
         if not hasattr(behave_context, "scenario_ctx"):
             return
@@ -68,6 +88,20 @@ class LifecycleManager:
 
         if step.status == "failed":
             scenectx.logger.error("step_failed", step=step.name)
+       #on failure add screenshot + trace
+        if step.status == "failed":
+            ui = scenectx.get_service("ui")
+            if ui:
+                png = scenectx.scenario_root / "failure_screenshot.png"
+                ui.screenshot(png)
+                scenectx.logger.error("ui_screenshot_captured", path=str(png))
+
+                trace_mode = os.getenv("TAS_TRACE", "off").strip()
+                if trace_mode in ("on-failure", "always"):
+                    trace = scenectx.scenario_root / "trace.zip"
+                    ui.stop_trace(trace)
+                    scenectx.logger.error("ui_trace_saved", path=str(trace))
+
 
     def after_scenario(self, behave_context, scenario) -> None:
         if not hasattr(behave_context, "scenario_ctx"):
@@ -77,6 +111,17 @@ class LifecycleManager:
             scenectx.cleanup()
         finally:
             scenectx.logger.info("scenario_finished", status=scenario.status.name)
+        #close UI session and save trace if “always”
+        ui = scenectx.get_service("ui")
+        if ui:
+            trace_mode = os.getenv("TAS_TRACE", "off").strip()
+            if trace_mode == "always":
+                trace = scenectx.scenario_root / "trace.zip"
+                ui.stop_trace(trace)
+                scenectx.logger.info("ui_trace_saved", path=str(trace))
+            ui.close()
+            scenectx.logger.info("ui_session_closed")
+
 
     def after_all(self, behave_context) -> None:
         if hasattr(behave_context, "run_ctx"):
