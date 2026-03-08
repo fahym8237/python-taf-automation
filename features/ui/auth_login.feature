@@ -11,7 +11,7 @@ Feature: Authentication - Login
     And the login button should be visible
     And the forgotten password link should be visible
 
-  @regression @trace=REQ-AUTH-LOGIN-001
+  @smoke @trace=REQ-AUTH-LOGIN-001
   Scenario: Navigate to forgotten password from login
     Given I open the login page
     When I click the forgotten password link

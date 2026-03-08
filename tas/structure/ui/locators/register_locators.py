@@ -1,6 +1,7 @@
 CONTENT_CONTAINER = "#content"
 REGISTER_HEADER = "xpath=//h1[normalize-space()='Register Account']"
 REGISTER_FORM = "#form-register"
+
 PERSONAL_DETAILS_LEGEND = "xpath=//legend[normalize-space()='Your Personal Details']"
 
 FIRSTNAME_INPUT = "#input-firstname"
@@ -20,7 +21,8 @@ NEWSLETTER_LEGEND = "xpath=//legend[normalize-space()='Newsletter']"
 NEWSLETTER_CHECKBOX = "#input-newsletter"
 
 PRIVACY_POLICY_CHECKBOX = "xpath=//input[@name='agree' and @type='checkbox']"
-PRIVACY_POLICY_LINK = "xpath=//a[contains(@href,'privacy') and contains(text(),'Privacy Policy')]"
+PRIVACY_POLICY_LINK = "xpath=//b[normalize-space()='Privacy Policy']"
 
 CONTINUE_BUTTON = "xpath=//form[@id='form-register']//button[@type='submit' and normalize-space()='Continue']"
-LOGIN_PAGE_LINK = "xpath=//p//a[contains(@href,'account/login')]"
+
+LOGIN_PAGE_LINK = "xpath=//p//a[@href='login.html' and normalize-space()='login page']"

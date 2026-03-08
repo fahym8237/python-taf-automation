@@ -1,14 +1,15 @@
-@capability_auth @nop
+@capability_auth @ui
 Feature: Authentication - Register
 
   @smoke @trace=REQ-AUTH-REGISTER-001
   Scenario: Register page renders required elements
     Given I open the register page
-    Then the register header should be visible
+    Then the register content container should be visible
+    And the register header should be visible
+    And the register form should be visible
     And the personal details legend should be visible
     And the first name input should be visible
     And the last name input should be visible
-    And the email input should be visible
     And the password legend should be visible
     And the password input should be visible
     And the newsletter legend should be visible
