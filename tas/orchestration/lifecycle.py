@@ -1,4 +1,4 @@
-# tas/orchestration/lifecycle.py
+
 
 from __future__ import annotations
 
@@ -20,16 +20,7 @@ from tas.interaction.api.api_session import ApiSession, ApiSessionConfig
 
 
 class LifecycleManager:
-    """
-    Behave hook orchestrator (Layer 2) + Interaction wiring (Layer 6) + Config (Layer 7).
-
-    Responsibilities:
-    - Create RunContext / ScenarioContext
-    - Create artifact folders
-    - Interpret tags
-    - Start/stop UiSession and ApiSession based on @ui/@api/@hybrid
-    - Capture screenshot/trace on step failure (UI)
-    """
+    
 
     def __init__(self) -> None:
         self._tag_interpreter = TagInterpreter()
@@ -76,10 +67,10 @@ class LifecycleManager:
             raise RuntimeError("Config missing from run_ctx.services['config']. Check before_all stores it.")
 
         am: ArtifactManager = run_ctx.services["artifact_manager"]
-
+        
         scenario_id = self._make_scenario_id(scenario.feature.name, scenario.name)
         scenario_root = am.ensure_scenario_root(run_ctx.run_root, scenario_id)
-
+        
         tags = self._tag_interpreter.interpret(scenario.feature, scenario)
 
         # Scenario logger
@@ -103,6 +94,9 @@ class LifecycleManager:
             logger=scenelog,
         )
         behave_context.scenario_ctx = scenectx
+
+        # Store a per-scenario data bag
+        scenectx.set_service("data", {})
 
         # ----------------------------
         # Start UI session if needed

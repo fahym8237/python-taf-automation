@@ -16,6 +16,9 @@ from tas.domain.flows.auth_flows import AuthFlows
 from tas.domain.flows.registration_flows import RegistrationFlows
 from tas.domain.models.user import RegistrationDraft
 
+from tas.data.registry import resolve_dataset, load_dataset
+from tas.data.validators import require_columns
+from tas.data.transforms import parse_bool
 
 # ----------------------------
 # Helpers
@@ -336,5 +339,62 @@ def step_register_login_page_link(context):
 
 
 # ----------------------------
-# DATASET SCENARIO (temporary; Layer 8 will replace this loader)
+# DATASET SCENARIO 
 # ----------------------------
+
+
+@when('I submit registration from dataset "{csv_name}"')
+def step_submit_dataset(context, csv_name):
+    adapter = _reg_adapter(context)
+
+    ref = resolve_dataset(csv_name)
+    rows = load_dataset(ref)
+
+    require_columns(
+        rows,
+        required=[
+            "firstname", "lastname", "email", "password",
+            "expect_firstname_error", "expect_lastname_error",
+            "expect_email_error", "expect_password_error",
+        ],
+        dataset_name=ref.name
+    )
+
+    results = []
+    for row in rows:
+        draft = RegistrationDraft(
+            firstname=row["firstname"],
+            lastname=row["lastname"],
+            email=row["email"],
+            password=row["password"],
+            newsletter=True,
+            agree_privacy=True,
+        )
+        adapter.open_register_page()
+        adapter.submit_registration(draft)
+        res = adapter.read_registration_errors()
+
+        results.append((row, res))
+
+    # Layer 8 store
+    context.scenario_ctx.get_service("data")["reg_dataset_results"] = results
+
+
+    
+
+@then("I should see the expected validation errors")
+def step_validate_errors(context):
+    results = context.scenario_ctx.get_service("data")["reg_dataset_results"]
+    for row, res in results:
+        exp_first = parse_bool(row["expect_firstname_error"])
+        exp_last  = parse_bool(row["expect_lastname_error"])
+        exp_email = parse_bool(row["expect_email_error"])
+        exp_pass  = parse_bool(row["expect_password_error"])
+       
+        
+        actual_first_present = bool(res.firstname_error and str(res.firstname_error).strip())
+        DomainAssert.that(actual_first_present, "firstname_error_present").is_equal_to(exp_first)
+        DomainAssert.that((res.lastname_error is not None), "lastname_error_present").is_equal_to(exp_last)
+        DomainAssert.that((res.email_error is not None), "email_error_present").is_equal_to(exp_email)
+        DomainAssert.that((res.password_error is not None), "password_error_present").is_equal_to(exp_pass)
+        
