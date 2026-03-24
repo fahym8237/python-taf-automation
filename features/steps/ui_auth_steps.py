@@ -9,8 +9,8 @@ from tas.structure.ui.pages.login_page import LoginPage
 from tas.structure.ui.pages.forgot_password_page import ForgotPasswordPage
 from tas.structure.ui.pages.register_page import RegisterPage
 
-from tas.structure.adapters.auth_ui_adapter import AuthUiAdapter
-from tas.structure.adapters.registration_ui_adapter import RegistrationUiAdapter
+from tas.structure.ui.adapters.auth_ui_adapter import AuthUiAdapter
+from tas.structure.ui.adapters.registration_ui_adapter import RegistrationUiAdapter
 
 from tas.domain.flows.auth_flows import AuthFlows
 from tas.domain.flows.registration_flows import RegistrationFlows
