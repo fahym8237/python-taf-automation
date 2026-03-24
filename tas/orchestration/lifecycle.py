@@ -18,7 +18,15 @@ from tas.config.loader import load_config
 from tas.interaction.ui.ui_session import UiSession, UiSessionConfig
 from tas.interaction.api.api_session import ApiSession, ApiSessionConfig
 
+from pathlib import Path
+from tas.observability.run_meta import write_run_meta, write_environment_properties
+from tas.observability.trace_tags import extract_requirements
 
+
+from tas.observability.attachments import Attachment, write_attachments_index
+from tas.observability.exporters.allure_adapter import attach_file_if_possible
+
+from tas.observability.exporters.traceability_csv import append_traceability_row
 class LifecycleManager:
     
 
@@ -45,6 +53,24 @@ class LifecycleManager:
         logger = JsonlLogger(run_log, LogContext(run_id=run_id, worker_id=worker_id))
         logger.info("run_started")
 
+        
+
+        # write run metadata
+        write_run_meta(run_root, run_id, worker_id)
+
+        # optional allure results dir
+        allure_dir = (run_root / "allure-results")
+        allure_dir.mkdir(parents=True, exist_ok=True)
+
+        # environment.properties for Allure
+        write_environment_properties(allure_dir, {
+            "run_id": run_id,
+            "worker_id": worker_id,
+            "browser": cfg.ui.browser,
+            "headless": str(cfg.ui.headless),
+            "trace_mode": cfg.ui.trace_mode,
+        })
+
         # Set run context
         behave_context.run_ctx = RunContext(
             run_id=run_id,
@@ -54,8 +80,10 @@ class LifecycleManager:
             services={
                 "artifact_manager": am,
                 "config": cfg,
+                "allure_dir": allure_dir,
             },
         )
+        
 
     def before_scenario(self, behave_context, scenario) -> None:
         if not hasattr(behave_context, "run_ctx"):
@@ -98,6 +126,11 @@ class LifecycleManager:
         # Store a per-scenario data bag
         scenectx.set_service("data", {})
 
+        
+
+        trace = extract_requirements(tags.raw)
+        scenelog.info("traceability", requirements=trace.requirement_ids)
+        scenectx.set_service("trace", trace)
         # ----------------------------
         # Start UI session if needed
         # ----------------------------
@@ -176,26 +209,24 @@ class LifecycleManager:
         if step.status == "failed":
             scenectx.logger.error("step_failed", step=step.name)
 
-            # UI failure diagnostics (screenshot + trace)
-            ui: Optional[UiSession] = scenectx.get_service("ui")
-            if ui:
-                try:
-                    png = scenectx.scenario_root / "failure_screenshot.png"
-                    ui.screenshot(png)
-                    scenectx.logger.error("ui_screenshot_captured", path=str(png))
-                except Exception as e:
-                    scenectx.logger.error("ui_screenshot_failed", error=str(e), traceback=traceback.format_exc())
+            items = []
 
-                # trace mode comes from config via run_ctx
+            ui = scenectx.get_service("ui")
+            if ui:
+                png = scenectx.scenario_root / "failure_screenshot.png"
+                # (already created in your current code; keep creating it)
+                ui.screenshot(png)
+                items.append(Attachment(name="failure_screenshot", path=str(png), mime="image/png"))
+                attach_file_if_possible("failure_screenshot", png, "image/png")
+
                 trace_mode = behave_context.run_ctx.services["config"].ui.trace_mode
                 if trace_mode in ("on-failure", "always"):
-                    try:
-                        trace = scenectx.scenario_root / "trace.zip"
-                        ui.stop_trace(trace)
-                        scenectx.logger.error("ui_trace_saved", path=str(trace))
-                    except Exception as e:
-                        scenectx.logger.error("ui_trace_save_failed", error=str(e), traceback=traceback.format_exc())
+                    trace = scenectx.scenario_root / "trace.zip"
+                    ui.stop_trace(trace)
+                    items.append(Attachment(name="playwright_trace", path=str(trace), mime="application/zip"))
+                    attach_file_if_possible("playwright_trace", trace, "application/zip")
 
+            write_attachments_index(scenectx.scenario_root, items)
     def after_scenario(self, behave_context, scenario) -> None:
         if not hasattr(behave_context, "scenario_ctx"):
             return
@@ -231,6 +262,21 @@ class LifecycleManager:
                     scenectx.logger.info("ui_session_closed")
 
             scenectx.logger.info("scenario_finished", status=scenario.status.name)
+        
+
+       
+
+        trace = scenectx.get_service("trace")
+        reqs = ",".join(trace.requirement_ids) if trace else ""
+
+        trace_csv = behave_context.run_ctx.run_root / "traceability.csv"
+        append_traceability_row(trace_csv, {
+            "run_id": behave_context.run_ctx.run_id,
+            "scenario_id": scenectx.scenario_id,
+            "feature": scenario.feature.name,
+            "scenario": scenario.name,
+            "requirements": reqs,
+        })
 
     def after_all(self, behave_context) -> None:
         if hasattr(behave_context, "run_ctx"):
