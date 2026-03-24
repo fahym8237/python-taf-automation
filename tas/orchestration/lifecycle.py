@@ -27,6 +27,13 @@ from tas.observability.attachments import Attachment, write_attachments_index
 from tas.observability.exporters.allure_adapter import attach_file_if_possible
 
 from tas.observability.exporters.traceability_csv import append_traceability_row
+
+from tas.observability.attachments import Attachment, write_attachments_index
+from tas.core.util.jsonutil import dumps_pretty
+from tas.core.util.files import write_text
+
+
+
 class LifecycleManager:
     
 
@@ -70,6 +77,7 @@ class LifecycleManager:
             "headless": str(cfg.ui.headless),
             "trace_mode": cfg.ui.trace_mode,
         })
+        
 
         # Set run context
         behave_context.run_ctx = RunContext(
@@ -95,10 +103,10 @@ class LifecycleManager:
             raise RuntimeError("Config missing from run_ctx.services['config']. Check before_all stores it.")
 
         am: ArtifactManager = run_ctx.services["artifact_manager"]
-        
+
         scenario_id = self._make_scenario_id(scenario.feature.name, scenario.name)
         scenario_root = am.ensure_scenario_root(run_ctx.run_root, scenario_id)
-        
+
         tags = self._tag_interpreter.interpret(scenario.feature, scenario)
 
         # Scenario logger
@@ -115,6 +123,7 @@ class LifecycleManager:
         )
         scenelog.info("scenario_started", tags=sorted(list(tags.raw)))
 
+        # ✅ Create scenectx FIRST (so it's always defined from here onward)
         scenectx = ScenarioContext(
             scenario_id=scenario_id,
             scenario_root=scenario_root,
@@ -123,14 +132,9 @@ class LifecycleManager:
         )
         behave_context.scenario_ctx = scenectx
 
-        # Store a per-scenario data bag
+        # ✅ Layer 8: per-scenario data bag
         scenectx.set_service("data", {})
 
-        
-
-        trace = extract_requirements(tags.raw)
-        scenelog.info("traceability", requirements=trace.requirement_ids)
-        scenectx.set_service("trace", trace)
         # ----------------------------
         # Start UI session if needed
         # ----------------------------
@@ -139,65 +143,70 @@ class LifecycleManager:
             headless = cfg.ui.headless
             trace_mode = cfg.ui.trace_mode
 
-            try:
-                ui = UiSession(
-                    UiSessionConfig(
-                        browser=browser,
-                        headless=headless,
-                        trace_mode=trace_mode,
-                        artifacts_dir=scenario_root,
-                    )
+            # Enforce UI URLs here (not in before_all)
+            if not (cfg.ui_pilot.login_url and cfg.ui_pilot.forgot_url and cfg.ui_pilot.register_url):
+                raise RuntimeError(
+                    "Missing UI pilot URLs for @ui/@hybrid scenario. Provide:\n"
+                    "  -D login_url=file:///.../login.html\n"
+                    "  -D forgot_url=file:///.../forgot-password.html\n"
+                    "  -D register_url=file:///.../register.html\n"
+                    "or set env LOGIN_URL/FORGOT_URL/REGISTER_URL."
                 )
-                ui.start()
-                scenectx.set_service("ui", ui)
-                scenelog.info(
-                    "ui_session_started",
+
+            ui = UiSession(
+                UiSessionConfig(
                     browser=browser,
                     headless=headless,
                     trace_mode=trace_mode,
+                    artifacts_dir=scenario_root,
                 )
-            except Exception as e:
-                scenelog.error(
-                    "ui_session_start_failed",
-                    error=str(e),
-                    traceback=traceback.format_exc(),
-                )
-                raise
+            )
+            ui.start()
+            scenectx.set_service("ui", ui)
+            scenelog.info("ui_session_started", browser=browser, headless=headless, trace_mode=trace_mode)
+            
+            
 
-        # ----------------------------
-        # Start API session if needed (kept env-based until API config is added)
-        # ----------------------------
         if tags.is_api or tags.is_hybrid:
-            # For now we keep API base url env-based. Later Layer 7 expands config for API too.
-            api_base_url = str(getattr(cfg, "api_base_url", "") or "").strip()
+            # Prefer Layer 7 config via -D api_base_url=..., fallback to env
+            import os
+            api_base_url = (cfg.api.base_url or "").strip()
             if not api_base_url:
-                # fallback to env if you haven't extended config model for API yet
-                import os
                 api_base_url = os.getenv("API_BASE_URL", "").strip()
 
             if not api_base_url:
-                raise RuntimeError("Missing API base url (set -D api_base_url=... or env API_BASE_URL)")
-
-            timeout_ms = int(getattr(cfg, "api_timeout_ms", 30000))
-
-            try:
-                api = ApiSession(
-                    ApiSessionConfig(
-                        base_url=api_base_url,
-                        timeout_ms=timeout_ms,
-                        default_headers=None,
-                    )
+                raise RuntimeError(
+                    "Missing API base url. Provide one of:\n"
+                    "  - Behave user-data: -D api_base_url=https://...\n"
+                    "  - Environment: API_BASE_URL=https://..."
                 )
-                api.start()
-                scenectx.set_service("api", api)
-                scenelog.info("api_session_started", base_url=api_base_url, timeout_ms=timeout_ms)
-            except Exception as e:
-                scenelog.error(
-                    "api_session_start_failed",
-                    error=str(e),
-                    traceback=traceback.format_exc(),
+
+            timeout_ms = int(getattr(cfg.api, "timeout_ms", 30000))
+
+            api = ApiSession(
+                ApiSessionConfig(
+                    base_url=api_base_url,
+                    timeout_ms=cfg.api.timeout_ms,
+                    default_headers=cfg.api.default_headers,
+                    ignore_https_errors=cfg.api.ignore_https_errors,  # ✅ critical
                 )
-                raise
+            )
+            api.start()
+            scenectx.set_service("api", api)
+            scenelog.info(
+                "api_session_started",
+                base_url=api_base_url,
+                timeout_ms=cfg.api.timeout_ms,
+                ignore_https_errors=cfg.api.ignore_https_errors,     # ✅ log it to verify
+            )
+
+        # ----------------------------
+        # Start API session if needed (kept env-based until we extend config for API)
+        # ----------------------------
+        trace = extract_requirements(tags.raw)
+        scenelog.info("traceability", requirements=trace.requirement_ids)
+        scenectx.set_service("trace", trace)
+
 
     def after_step(self, behave_context, step) -> None:
         if not hasattr(behave_context, "scenario_ctx"):
@@ -210,7 +219,6 @@ class LifecycleManager:
             scenectx.logger.error("step_failed", step=step.name)
 
             items = []
-
             ui = scenectx.get_service("ui")
             if ui:
                 png = scenectx.scenario_root / "failure_screenshot.png"
@@ -225,8 +233,33 @@ class LifecycleManager:
                     ui.stop_trace(trace)
                     items.append(Attachment(name="playwright_trace", path=str(trace), mime="application/zip"))
                     attach_file_if_possible("playwright_trace", trace, "application/zip")
-
             write_attachments_index(scenectx.scenario_root, items)
+
+            api = scenectx.get_service("api")
+            items = []
+            if api and getattr(api, "last_exchange", None):
+                ex = api.last_exchange
+                req_path = scenectx.scenario_root / "api_last_request.json"
+                resp_path = scenectx.scenario_root / "api_last_response.json"
+
+                write_text(req_path, dumps_pretty({
+                    "method": ex.method,
+                    "url": ex.url,
+                    "headers": ex.request_headers,
+                    "json": ex.request_json,
+                }))
+                write_text(resp_path, dumps_pretty({
+                    "status": ex.status,
+                    "headers": ex.response_headers,
+                    "json": ex.response_json,
+                    "text": ex.response_text,
+                }))
+
+                items.append(Attachment(name="api_last_request", path=str(req_path), mime="application/json"))
+                items.append(Attachment(name="api_last_response", path=str(resp_path), mime="application/json"))
+            write_attachments_index(scenectx.scenario_root, items)
+
+
     def after_scenario(self, behave_context, scenario) -> None:
         if not hasattr(behave_context, "scenario_ctx"):
             return
