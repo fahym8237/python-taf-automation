@@ -1,7 +1,7 @@
 @capability_auth @ui
 Feature: Authentication - Forgot Password
 
-  @smoke @trace=REQ-AUTH-FORGOT-001
+  @PYT-9 @smoke @trace=REQ-AUTH-FORGOT-001
   Scenario: Forgot password page renders required elements
     Given I open the forgot password page
     Then the forgot password content container should be visible

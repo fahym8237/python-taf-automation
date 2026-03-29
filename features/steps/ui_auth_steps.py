@@ -99,6 +99,7 @@ def step_login_form(context):
     adapter = _auth_adapter(context)
     state = AuthFlows(adapter).login_page_should_render()
     DomainAssert.that(state.login_form_visible, "login_form_visible").is_true()
+    #DomainAssert.that(state.login_form_visible, "login_form_visible").is_false()  # Login form is not visible until user interacts with the page (bug)
 
 
 @then("the returning customer header should be visible")

@@ -1,7 +1,7 @@
 @capability_auth @ui
 Feature: Authentication - Login
 
-  @smoke @trace=REQ-AUTH-LOGIN-001
+  @PYT-11 @smoke @trace=REQ-AUTH-LOGIN-001
   Scenario: Login page renders required elements
     Given I open the login page
     Then the login form should be visible
@@ -11,7 +11,7 @@ Feature: Authentication - Login
     And the login button should be visible
     And the forgotten password link should be visible
 
-  @smoke @trace=REQ-AUTH-LOGIN-001
+  @PYT-10 @smoke @trace=REQ-AUTH-LOGIN-001
   Scenario: Navigate to forgotten password from login
     Given I open the login page
     When I click the forgotten password link

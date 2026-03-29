@@ -20,11 +20,9 @@ from tas.interaction.api.api_session import ApiSession, ApiSessionConfig
 
 from pathlib import Path
 from tas.observability.run_meta import write_run_meta, write_environment_properties
-from tas.observability.trace_tags import extract_requirements
 
 
 from tas.observability.attachments import Attachment, write_attachments_index
-from tas.observability.exporters.allure_adapter import attach_file_if_possible
 
 from tas.observability.exporters.traceability_csv import append_traceability_row
 
@@ -32,7 +30,8 @@ from tas.observability.attachments import Attachment, write_attachments_index
 from tas.core.util.jsonutil import dumps_pretty
 from tas.core.util.files import write_text
 
-
+from tas.observability.exporters.allure_adapter import attach_file_if_possible, attach_text_if_possible
+from tas.observability.trace_tags import extract_requirements
 
 class LifecycleManager:
     
@@ -66,18 +65,17 @@ class LifecycleManager:
         write_run_meta(run_root, run_id, worker_id)
 
         # optional allure results dir
-        allure_dir = (run_root / "allure-results")
-        allure_dir.mkdir(parents=True, exist_ok=True)
+        allure_results_dir = Path("target/allure-results")
+        allure_results_dir.mkdir(parents=True, exist_ok=True)
 
-        # environment.properties for Allure
-        write_environment_properties(allure_dir, {
+        write_environment_properties(allure_results_dir, {
+            "browser": getattr(cfg.ui, "browser", ""),
+            "headless": getattr(cfg.ui, "headless", ""),
+            "trace_mode": getattr(cfg.ui, "trace_mode", ""),
+            "api_base_url": getattr(cfg.api, "base_url", ""),
             "run_id": run_id,
             "worker_id": worker_id,
-            "browser": cfg.ui.browser,
-            "headless": str(cfg.ui.headless),
-            "trace_mode": cfg.ui.trace_mode,
         })
-        
 
         # Set run context
         behave_context.run_ctx = RunContext(
@@ -88,7 +86,7 @@ class LifecycleManager:
             services={
                 "artifact_manager": am,
                 "config": cfg,
-                "allure_dir": allure_dir,
+                "allure_dir": allure_results_dir,
             },
         )
         
@@ -132,6 +130,12 @@ class LifecycleManager:
         )
         behave_context.scenario_ctx = scenectx
 
+        trace = extract_requirements(tags.raw)
+        scenectx.set_service("trace", trace)
+
+        if trace.requirement_ids:
+            attach_text_if_possible("requirements", ", ".join(trace.requirement_ids))
+
         # ✅ Layer 8: per-scenario data bag
         scenectx.set_service("data", {})
 
@@ -163,9 +167,7 @@ class LifecycleManager:
             )
             ui.start()
             scenectx.set_service("ui", ui)
-            scenelog.info("ui_session_started", browser=browser, headless=headless, trace_mode=trace_mode)
-            
-            
+            scenelog.info("ui_session_started", browser=browser, headless=headless, trace_mode=trace_mode)  
 
         if tags.is_api or tags.is_hybrid:
             # Prefer Layer 7 config via -D api_base_url=..., fallback to env
@@ -225,14 +227,17 @@ class LifecycleManager:
                 # (already created in your current code; keep creating it)
                 ui.screenshot(png)
                 items.append(Attachment(name="failure_screenshot", path=str(png), mime="image/png"))
-                attach_file_if_possible("failure_screenshot", png, "image/png")
+                #attach_file_if_possible("failure_screenshot", png, "image/png")
+                attach_file_if_possible("failure_screenshot", png)
 
                 trace_mode = behave_context.run_ctx.services["config"].ui.trace_mode
                 if trace_mode in ("on-failure", "always"):
                     trace = scenectx.scenario_root / "trace.zip"
                     ui.stop_trace(trace)
                     items.append(Attachment(name="playwright_trace", path=str(trace), mime="application/zip"))
-                    attach_file_if_possible("playwright_trace", trace, "application/zip")
+                    #attach_file_if_possible("playwright_trace", trace, "application/zip")
+                    attach_file_if_possible("playwright_trace", trace)
+
             write_attachments_index(scenectx.scenario_root, items)
 
             api = scenectx.get_service("api")
@@ -257,6 +262,8 @@ class LifecycleManager:
 
                 items.append(Attachment(name="api_last_request", path=str(req_path), mime="application/json"))
                 items.append(Attachment(name="api_last_response", path=str(resp_path), mime="application/json"))
+                attach_file_if_possible("api_last_request", req_path)
+                attach_file_if_possible("api_last_response", resp_path)
             write_attachments_index(scenectx.scenario_root, items)
 
 

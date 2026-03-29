@@ -1,7 +1,7 @@
 @capability_auth @ui
 Feature: Authentication - Register
 
-  @smoke @trace=REQ-AUTH-REGISTER-001
+  @PYT-12 @smoke @trace=REQ-AUTH-REGISTER-001
   Scenario: Register page renders required elements
     Given I open the register page
     Then the register content container should be visible
@@ -19,7 +19,7 @@ Feature: Authentication - Register
     And the register continue button should be visible
     And the login page link should be visible
 
-  @regression @dataset=register_invalid.csv @trace=REQ-AUTH-REGISTER-001
+  @PYT-13 @regression @dataset=register_invalid.csv @trace=REQ-AUTH-REGISTER-001
   Scenario: Register validation errors from dataset
     Given I open the register page
     When I submit registration from dataset "register_invalid.csv"

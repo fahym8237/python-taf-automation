@@ -1,3 +1,14 @@
+"""
+    This class serves as the root of the framework's error hierarchy,
+    enabling consistent exception handling, classification, and reporting
+    across all layers of the Test Automation framework.
+
+    All custom framework exceptions should inherit from this class to allow:
+    - Centralized error classification
+    - Unified logging and observability
+    - Integration with reporting and CI/CD pipelines
+"""
+
 class TASBaseError(Exception):
     """Base framework exception."""
 

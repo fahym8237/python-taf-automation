@@ -3,6 +3,22 @@ from typing import Any, Callable, Optional
 
 from tas.core.errors.exceptions import TASAssertionError
 
+"""
+    This class encapsulates a value under test and provides a set of
+    expressive, domain-oriented assertion methods (e.g., is_true, is_equal_to).
+    It is designed to improve readability, consistency, and diagnostics of
+    validation logic across UI, API, and domain layers.
+
+    Key Features:
+    - Fluent assertion style for improved readability
+    - Custom failure messages aligned with business intent
+    - Centralized assertion behavior for the entire framework
+
+    Note:
+    This class is not intended to be used directly. Use DomainAssert.that(...)
+    as the public entry point.
+"""
+
 @dataclass(frozen=True)
 class _That:
     value: Any
