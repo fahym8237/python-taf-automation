@@ -4,6 +4,34 @@ from typing import Callable, Optional, Type, Tuple
 
 from tas.core.errors.exceptions import TASTimeoutError
 
+"""
+    Generic polling-based wait utility for synchronizing test execution with system state.
+
+    This class repeatedly evaluates a given condition until it becomes True or a timeout
+    is reached. It is designed to handle asynchronous behavior in UI and API interactions,
+    reducing test flakiness and improving execution stability.
+
+    Features:
+    - Configurable timeout and polling interval
+    - Support for ignoring transient exceptions during evaluation
+    - Optional timeout message customization
+    - Integration with TAS error model via TASTimeoutError
+
+    Typical Use Cases:
+    - Waiting for UI elements to become visible or clickable
+    - Polling API state until a desired condition is met
+    - Synchronizing test steps with asynchronous system behavior
+
+    Example:
+        wait = Wait()
+        wait.until(lambda: page.is_visible("login_button"))
+
+    Design Note:
+    This component is part of the Automation Core Layer (Synchronization & Retry)
+    and is used across UI, API, and domain layers to ensure reliable test execution.
+"""
+
+
 @dataclass(frozen=True)
 class WaitConfig:
     timeout_s: float = 10.0

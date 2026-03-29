@@ -33,8 +33,10 @@ def step_create_booking(context):
 @then("the booking should be created successfully")
 def step_created_ok(context):
     booking_id = context.scenario_ctx.get_service("data").get("booking_id")
+    
     DomainAssert.that(booking_id, "booking_id").is_not_none()
     DomainAssert.that(isinstance(booking_id, int), "booking_id_is_int").is_true()
+    
 
 
 @then("I can retrieve the booking by id")
@@ -79,6 +81,7 @@ def step_patch_assert(context):
 @when("I delete the booking")
 def step_delete(context):
     booking_id = context.scenario_ctx.get_service("data")["booking_id"]
+    #booking_id = -1 # to faile a step
     _booking_flows(context).delete_then_get_should_404(booking_id)
 
 
