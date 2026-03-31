@@ -1,63 +1,104 @@
-
-```
 # 🚀 Test Automation Solution (TAS)  
-**Python | Playwright | Behave | Allure | Xray | Enterprise Architecture**
+**Python | Playwright | Behave | Allure | Xray | Enterprise-Grade Architecture**
 
 ---
 
 ## 📌 Overview
 
-This project is a **production-grade Test Automation Solution (TAS)** designed following:
+This repository contains a **production-ready Test Automation Solution (TAS)** designed using:
 
-- ISTQB CTAL-TAE (Test Automation Engineer) principles  
-- Layered enterprise architecture 
-- Hybrid testing strategy (UI + API)  
+- **ISTQB CTAL-TAE best practices**
+- **Layered enterprise architecture**
+- **Hybrid automation strategy (UI + API)**
 
-It demonstrates how to build a **scalable, maintainable, and observable automation framework** from scratch.
+The objective of this project is to demonstrate how to build a **scalable, maintainable, and observable automation framework** aligned with real-world enterprise standards.
+
+---
+
+## 🎯 Objectives
+
+- Build a **modular and extensible automation framework**
+- Support **UI, API, and Hybrid testing**
+- Enable **high observability (logs, artifacts, reports)**
+- Ensure **CI/CD readiness**
+- Follow **clean architecture & domain-driven design**
 
 ---
 
 ## 🏗️ Architecture Overview
 
-### Layers
+This TAS is designed using a **layered architecture**, where each layer has a clear responsibility:
 
-1. Test Design Layer – Gherkin scenarios (BDD)  
-2. Test Orchestration Layer – Lifecycle & execution control  
-3. Business / Domain Layer – Business flows & journeys  
-4. Test Structure Layer – Pages, clients, adapters  
-5. Automation Core Layer – Assertions, utils, sync  
-6. Application Interaction Layer – Playwright UI + API  
-7. Configuration Layer – Environment & runtime config  
-8. Test Data Layer – Data-driven testing  
-9. Execution Environment Layer – Local / Docker / CI  
-10. CI/CD Layer – Pipeline execution  
-11. Observability & Reporting Layer – Allure, logs, Xray  
+### 🔹 Core Layers
+
+1. **Test Design Layer**  
+   → Gherkin (BDD) scenarios defining business behavior
+
+2. **Test Orchestration Layer**  
+   → Controls lifecycle, hooks, execution flow
+
+3. **Domain Layer (Business Logic)**  
+   → Encapsulates business flows (e.g., authentication, booking)
+
+4. **Test Structure Layer**  
+   → Pages, API clients, adapters
+
+5. **Automation Core Layer**  
+   → Assertions, utilities, synchronization logic
+
+6. **Interaction Layer**  
+   → Direct interaction with:
+   - Playwright (UI)
+   - HTTP clients (API)
+
+7. **Configuration Layer**  
+   → Environment & runtime configuration
+
+8. **Test Data Layer**  
+   → External datasets (CSV, JSON)
+
+9. **Execution Environment Layer**  
+   → Local / Docker / CI execution
+
+10. **CI/CD Layer**  
+   → Pipeline integration (GitHub Actions, Jenkins)
+
+11. **Observability Layer**  
+   → Logging, artifacts, Allure reporting, Xray integration
 
 ---
 
-## 🔁 Execution Flow
+## 🔁 Execution Flow (Critical for Understanding)
+
+Below is the **end-to-end execution lifecycle of a test scenario**:
 
 ```
-
 Gherkin Scenario
 ↓
 Tag Interpretation (@ui / @api / @hybrid)
 ↓
-Lifecycle Manager initializes context
+Lifecycle Manager initializes execution context
 ↓
-Step Definitions
+Step Definitions (BDD glue code)
 ↓
-Domain Flow
+Domain Layer (business flows)
 ↓
-Adapter
+Adapters (bridge domain → implementation)
 ↓
-Interaction Layer (UI/API)
+Interaction Layer (Playwright / API client)
 ↓
-Assertions
+State retrieval (UI/API response)
 ↓
-Artifacts + Reports
+Assertions (validation)
+↓
+Artifacts & Logs generation
+↓
+Reporting (Allure) + Test Management (Xray)
+```
 
-````
+### 🧠 Key Insight
+
+> The **Domain Layer is fully decoupled** from UI/API tools — making the framework scalable and maintainable.
 
 ---
 
@@ -65,9 +106,13 @@ Artifacts + Reports
 
 ---
 
-## 1️⃣ Create a Test Scenario (BDD)
+## 1️⃣ Write a Test Scenario (BDD)
 
-Write your test in Gherkin inside the `features/` folder:
+Create Gherkin scenarios inside:
+
+```
+features/
+```
 
 ```gherkin
 Feature: User Authentication
@@ -77,13 +122,13 @@ Feature: User Authentication
     Given the user navigates to login page
     When the user logs in with valid credentials
     Then the user should be logged in
-````
+```
 
 ---
 
 ## 2️⃣ Implement Step Definitions
 
-Steps are implemented in:
+Location:
 
 ```
 features/steps/
@@ -99,9 +144,9 @@ def step_impl(context):
 
 ---
 
-## 3️⃣ Use Domain Layer (Business Logic)
+## 3️⃣ Use Domain Layer (Business Abstraction)
 
-Domain flows orchestrate business behavior:
+Encapsulate business logic:
 
 ```python
 class AuthFlows:
@@ -115,9 +160,9 @@ class AuthFlows:
 
 ---
 
-## 4️⃣ Use Adapters (Bridge to UI/API)
+## 4️⃣ Use Adapters (Domain → Implementation)
 
-Adapters connect domain → structure:
+Adapters connect domain logic to UI/API:
 
 ```python
 class AuthUIAdapter(AuthPort):
@@ -131,14 +176,12 @@ class AuthUIAdapter(AuthPort):
 
 ---
 
-## 5️⃣ Interaction Layer (UI/API)
+## 5️⃣ Interaction Layer (Low-Level Execution)
 
 Only this layer interacts with tools:
 
-* UI → Playwright
-* API → HTTP client
-
-Example:
+- UI → Playwright
+- API → HTTP Client
 
 ```python
 self.page.locator("#input-email").fill(email)
@@ -146,13 +189,13 @@ self.page.locator("#input-email").fill(email)
 
 ---
 
-## 6️⃣ Run Tests
+## 6️⃣ Execute Tests
 
 ### ▶️ UI Tests
 
 ```bash
 behave --tags="@ui and @smoke" --no-capture \
-  -D login_url="https://fahym8237.github.io/auth-app/login.html"
+  -D login_url="https://your-app-url"
 ```
 
 ---
@@ -166,7 +209,7 @@ behave --tags="@api and @smoke" --no-capture \
 
 ---
 
-### ▶️ Hybrid Tests
+### ▶️ Hybrid Tests (UI + API)
 
 ```bash
 behave --no-capture \
@@ -176,21 +219,21 @@ behave --no-capture \
 
 ---
 
-## 7️⃣ Use Tags (Execution Control)
+## 7️⃣ Tag-Driven Execution
 
-| Tag         | Purpose         |
-| ----------- | --------------- |
-| @ui         | UI tests        |
-| @api        | API tests       |
-| @hybrid     | UI + API tests  |
-| @smoke      | Critical tests  |
-| @regression | Full test suite |
+| Tag         | Description              |
+|------------|--------------------------|
+| @ui        | UI scenarios             |
+| @api       | API scenarios            |
+| @hybrid    | Combined UI + API        |
+| @smoke     | Critical validation      |
+| @regression| Full test suite          |
 
 ---
 
 ## 8️⃣ Test Data Management
 
-Place datasets in:
+Store datasets in:
 
 ```
 features/data/
@@ -205,9 +248,9 @@ invalid@test.com,1234,error
 
 ---
 
-## 9️⃣ Configuration
+## 9️⃣ Configuration Management
 
-Pass runtime parameters:
+### CLI Parameters
 
 ```bash
 -D browser=chromium
@@ -215,7 +258,7 @@ Pass runtime parameters:
 -D api_base_url=...
 ```
 
-Or environment variables:
+### Environment Variables
 
 ```bash
 export TAS_BROWSER=chromium
@@ -224,21 +267,34 @@ export TAS_HEADLESS=true
 
 ---
 
-## 🔟 Reporting
+## 🔟 Reporting & Observability
 
-### Allure Report
+### 📊 Allure Report
 
 ```bash
 allure serve target/allure-results
 ```
 
+Includes:
+
+- Steps
+- Attachments
+- Logs
+- Screenshots
+
 ---
 
-## 1️⃣1️⃣ Xray Integration
+## 1️⃣1️⃣ Xray Integration (JIRA)
 
 ```bash
 python -m xray.upload_xray_results_multipart target/xray/cucumber.json
 ```
+
+Supports:
+
+- Test execution tracking
+- Traceability
+- CI integration
 
 ---
 
@@ -268,46 +324,49 @@ target/
 
 ---
 
-## ⚙️ Key Features
+## ⚙️ Key Capabilities
 
-* Hybrid Testing (UI + API)
-* Tag-driven execution
-* Layered enterprise architecture
-* Domain-driven design
-* Allure reporting
-* Xray integration
-* Data-driven testing
+- ✅ Hybrid Testing (UI + API)
+- ✅ Layered Architecture (Enterprise-grade)
+- ✅ Domain-driven design
+- ✅ Tag-based execution control
+- ✅ Data-driven testing
+- ✅ Allure reporting
+- ✅ Xray integration
+- ✅ CI/CD ready
 
 ---
 
-## 📈 CI/CD Ready
+## 🚀 CI/CD Compatibility
 
-Compatible with:
+Fully compatible with:
 
-* GitHub Actions
-* Jenkins
-* Docker
+- GitHub Actions  
+- Jenkins  
+- Docker  
 
 Supports:
 
-* Parallel execution
-* Headless execution
-* Remote environments
+- Parallel execution  
+- Headless execution  
+- Remote browser execution  
 
 ---
 
 ## 🎯 Design Principles
 
-* Separation of Concerns
-* Scalability
-* Maintainability
-* Observability
+- **Separation of Concerns**
+- **Scalability**
+- **Maintainability**
+- **Observability**
+- **Reusability**
 
 ---
 
 ## 👨‍💻 Author
 
-**Fahym Abdelfattah)**
-Test Automation Engineer | ISTQB CTFL & CTAL-TAE
+**Fahym Abdelfattah**  
+Test Automation Engineer  
+ISTQB CTFL | CTAL-TAE
 
 ---
