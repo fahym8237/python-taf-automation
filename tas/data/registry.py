@@ -5,7 +5,7 @@ from tas.core.errors.exceptions import TASTestDataError
 from tas.data.dataset_ref import DatasetRef
 from tas.data.loaders.csv_loader import load_csv
 
-DATA_ROOT = Path("features") / "data"
+DATA_ROOT = Path("resources") 
 
 def resolve_dataset(name: str) -> DatasetRef:
     path = DATA_ROOT / name

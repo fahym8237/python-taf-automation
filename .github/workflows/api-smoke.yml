@@ -1,0 +1,99 @@
+name: API Smoke
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+
+jobs:
+  api-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    environment: Py-test-auto
+
+    env:
+      XRAY_PROJECT_KEY: ${{ vars.XRAY_PROJECT_KEY }}
+      XRAY_EXECUTION_ISSUE_TYPE: ${{ vars.XRAY_EXECUTION_ISSUE_TYPE }}
+      GIT_REF: ${{ github.ref_name }}
+      BUILD_ID: ${{ github.run_number }}
+      XRAY_ENVIRONMENT: ${{ vars.XRAY_ENVIRONMENT }}
+
+      XRAY_LABELS: "tas,api,smoke"
+      XRAY_RUN_KIND: "API Smoke"
+
+      API_BASE_URL: "https://restful-booker.herokuapp.com"
+      API_IGNORE_HTTPS_ERRORS: "true"
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: Set up Java for Allure
+        uses: actions/setup-java@v4
+        with:
+          distribution: "temurin"
+          java-version: "17"
+
+      - name: Install Allure CLI
+        run: |
+          npm install -g allure-commandline
+
+      - name: Install dependencies
+        run: |
+          python -m pip install -U pip
+          pip install -r requirements.txt
+
+      - name: Install Playwright
+        run: |
+          python -m playwright install --with-deps
+
+      - name: Run API smoke with Cucumber JSON + Allure
+        run: |
+          mkdir -p target/xray
+          mkdir -p target/allure-results
+
+          behave --tags="@api and @smoke" --no-capture \
+            -D api_base_url="${API_BASE_URL}" \
+            -D api_ignore_https_errors="${API_IGNORE_HTTPS_ERRORS}" \
+            --format behave_cucumber_formatter:PrettyCucumberJSONFormatter \
+            -o target/xray/cucumber.json \
+            -f allure_behave.formatter:AllureFormatter \
+            -o target/allure-results
+
+      - name: Filter executed scenarios for Xray
+        if: always()
+        run: |
+          python xray/filter_xray_cucumber_results.py \
+            target/xray/cucumber.json \
+            target/xray/cucumber.executed.json
+
+#      - name: Upload Xray execution
+#        if: always()
+#        env:
+#          XRAY_CLIENT_ID: ${{ secrets.XRAY_CLIENT_ID }}
+#          XRAY_CLIENT_SECRET: ${{ secrets.XRAY_CLIENT_SECRET }}
+#        run: |
+#          python -m xray.upload_xray_results_multipart target/xray/cucumber.executed.json
+
+      - name: Generate Allure HTML report
+        if: always()
+        run: |
+          allure generate target/allure-results --clean -o target/allure-report
+
+      - name: Upload API artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: api-artifacts
+          path: |
+            target/artifacts/**
+            target/xray/**
+            target/allure-results/**
+            target/allure-report/**
+          if-no-files-found: ignore
