@@ -9,6 +9,7 @@ jobs:
   api-smoke:
     runs-on: ubuntu-latest
     timeout-minutes: 25
+    environment: Py-test-auto
 
     env:
       XRAY_PROJECT_KEY: ${{ vars.XRAY_PROJECT_KEY }}
@@ -72,13 +73,13 @@ jobs:
             target/xray/cucumber.json \
             target/xray/cucumber.executed.json
 
-      - name: Upload Xray execution
-        if: always()
-        env:
-          XRAY_CLIENT_ID: ${{ secrets.XRAY_CLIENT_ID }}
-          XRAY_CLIENT_SECRET: ${{ secrets.XRAY_CLIENT_SECRET }}
-        run: |
-          python -m xray.upload_xray_results_multipart target/xray/cucumber.executed.json
+#      - name: Upload Xray execution
+#        if: always()
+#        env:
+#          XRAY_CLIENT_ID: ${{ secrets.XRAY_CLIENT_ID }}
+#          XRAY_CLIENT_SECRET: ${{ secrets.XRAY_CLIENT_SECRET }}
+#        run: |
+#          python -m xray.upload_xray_results_multipart target/xray/cucumber.executed.json
 
       - name: Generate Allure HTML report
         if: always()
