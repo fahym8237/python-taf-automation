@@ -65,7 +65,7 @@ jobs:
           FORGOT_URL="https://opencart.liveblog365.com/index.php?route=account/forgotten&language=en-gb"
           REGISTER_URL="https://opencart.liveblog365.com/index.php?route=account/register&language=en-gb"
 
-          behave --tags="@ui and @smoke" --no-capture \
+          behave --tags="@ui and @login_page" --no-capture \
             -D login_url="${LOGIN_URL}" \
             -D forgot_url="${FORGOT_URL}" \
             -D register_url="${REGISTER_URL}" \
