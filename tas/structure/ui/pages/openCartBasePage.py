@@ -49,6 +49,14 @@ class OpenCartBasePage:
             return True
         except Exception:
             return False
+    def is_visible_changePassword(self, selector: str, timeout: int = 5000) -> bool:
+        locator = self.page.locator(selector).first
+        try:
+            # Wait until the element is visible (up to timeout ms)
+            locator.wait_for(state="visible", timeout=timeout)
+            return True
+        except Exception:
+            return False
     def text_content(self, selector: str) -> str | None:
         locator = self.page.locator(selector).first
         return locator.text_content() if locator.is_visible() else None

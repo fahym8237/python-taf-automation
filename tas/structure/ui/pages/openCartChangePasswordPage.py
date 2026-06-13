@@ -65,7 +65,7 @@ class OpenCartChangePasswordPage(OpenCartBasePage):
         self.clear_and_fill(self.PASSWORD_INPUT, password)
     def enter_same_confirm_password(self) -> None:
         if not self._latest_new_password:
-            self._latest_new_password = os.getenv("LOGIN_PASSWORD", "Password123!")
+            self._latest_new_password = os.getenv("LOGIN_PASSWORD")
         self.clear_and_fill(self.CONFIRM_INPUT, self._latest_new_password)
     def enter_different_confirm_password(self) -> None:
         self.clear_and_fill(self.CONFIRM_INPUT, "DifferentPassword123!")
@@ -75,7 +75,7 @@ class OpenCartChangePasswordPage(OpenCartBasePage):
         self.submit_form()
     def is_password_changed_successfully(self) -> bool:
         success = (
-            self.is_visible(self.SUCCESS_ALERT)
+            self.is_visible_changePassword(self.SUCCESS_ALERT)
             or self.url_contains(self.MY_ACCOUNT_ROUTE)
         )
         
