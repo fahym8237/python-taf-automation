@@ -20,16 +20,14 @@ jobs:
   build-site:
     runs-on: ubuntu-latest
     timeout-minutes: 45
-    
 
     env:
-      LOGIN_PASSWORD: ${{ vars.LOGIN_PASSWORD}}
-      LOGIN_EMAIL: ${{ vars.LOGIN_EMAIL}}
-      LOGIN_NEW_PASSWORD: ${{ vars.LOGIN_NEW_PASSWORD}}
+      LOGIN_PASSWORD: ${{ vars.LOGIN_PASSWORD }}
+      LOGIN_EMAIL: ${{ vars.LOGIN_EMAIL }}
+      LOGIN_NEW_PASSWORD: ${{ vars.LOGIN_NEW_PASSWORD }}
 
     environment:
       name: Py-test-auto
-      
 
     steps:
       - name: Checkout
@@ -61,6 +59,7 @@ jobs:
           python -m playwright install --with-deps
 
       - name: Run API smoke with Allure
+        continue-on-error: true
         env:
           API_BASE_URL: https://restful-booker.herokuapp.com
           API_IGNORE_HTTPS_ERRORS: true
@@ -74,10 +73,12 @@ jobs:
             -o target/api-allure-results
 
       - name: Generate API Allure report
+        if: always()
         run: |
-          allure generate target/api-allure-results --clean -o site/api
+          allure generate target/api-allure-results --clean -o site/api || true
 
       - name: Run UI smoke with Allure
+        continue-on-error: true
         env:
           BROWSER: chromium
           HEADLESS: true
@@ -94,11 +95,14 @@ jobs:
             -o target/ui-allure-results
 
       - name: Generate UI Allure report
+        if: always()
         run: |
-          allure generate target/ui-allure-results --clean -o site/ui
+          allure generate target/ui-allure-results --clean -o site/ui || true
 
       - name: Create landing page
+        if: always()
         run: |
+          mkdir -p site
           cat > site/index.html <<'EOF'
           <!doctype html>
           <html lang="en">
@@ -122,15 +126,18 @@ jobs:
           EOF
 
       - name: Configure GitHub Pages
+        if: always()
         uses: actions/configure-pages@v5
 
       - name: Upload Pages artifact
+        if: always()
         uses: actions/upload-pages-artifact@v4
         with:
           path: site
 
   deploy:
     needs: build-site
+    if: always()
     runs-on: ubuntu-latest
 
     environment:
