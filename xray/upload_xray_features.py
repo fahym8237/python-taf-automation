@@ -7,8 +7,8 @@ from tempfile import TemporaryDirectory
 import requests
 
 
-XRAY_AUTH_URL = "https://xray.cloud.getxray.app/api/v2/authenticate"
-XRAY_IMPORT_FEATURES_URL = "https://xray.cloud.getxray.app/api/v2/import/feature"
+XRAY_AUTH_URL = "https://eu.xray.cloud.getxray.app/api/v2/authenticate"
+XRAY_IMPORT_FEATURES_URL = "https://eu.xray.cloud.getxray.app/api/v2/import/feature"
 
 
 def require_env(name: str) -> str:
@@ -66,7 +66,7 @@ def main() -> int:
         client_secret = require_env("XRAY_CLIENT_SECRET")
         project_key = require_env("XRAY_PROJECT_KEY")
 
-        root = Path(sys.argv[1]) if len(sys.argv) > 1 else Path("features/api")
+        root = Path(sys.argv[1]) if len(sys.argv) > 1 else Path("features/ui")
         if not root.exists():
             raise RuntimeError(f"Path does not exist: {root}")
 
