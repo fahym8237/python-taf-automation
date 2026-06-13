@@ -85,7 +85,7 @@ jobs:
         run: |
           mkdir -p target/ui-allure-results
 
-          behave --tags="@login_page" --no-capture \
+          behave --tags="@login_page and @session" --no-capture \
             -D login_url="https://opencart.liveblog365.com/index.php?route=account/login&language=en-gb" \
             -D forgot_url="https://opencart.liveblog365.com/index.php?route=account/forgotten&language=en-gb" \
             -D register_url="https://opencart.liveblog365.com/index.php?route=account/register&language=en-gb" \
