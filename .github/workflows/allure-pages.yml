@@ -57,6 +57,13 @@ jobs:
       - name: Install Playwright
         run: |
           python -m playwright install --with-deps
+      
+      - name: Validate login credentials
+        run: |
+          test -n "$LOGIN_EMAIL" || (echo "LOGIN_EMAIL is missing" && exit 1)
+          test -n "$LOGIN_PASSWORD" || (echo "LOGIN_PASSWORD is missing" && exit 1)
+          test -n "$LOGIN_NEW_PASSWORD" || (echo "LOGIN_NEW_PASSWORD is missing" && exit 1)
+          echo "Login credentials are configured"
 
       - name: Run API smoke with Allure
         continue-on-error: true
