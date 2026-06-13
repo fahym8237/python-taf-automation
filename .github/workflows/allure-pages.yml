@@ -22,9 +22,9 @@ jobs:
     timeout-minutes: 45
 
     env:
-      LOGIN_PASSWORD: ${{ vars.LOGIN_PASSWORD }}
-      LOGIN_EMAIL: ${{ vars.LOGIN_EMAIL }}
-      LOGIN_NEW_PASSWORD: ${{ vars.LOGIN_NEW_PASSWORD }}
+      LOGIN_PASSWORD: ${{ secrets.LOGIN_PASSWORD }}
+      LOGIN_EMAIL: ${{ secrets.LOGIN_EMAIL }}
+      LOGIN_NEW_PASSWORD: ${{ secrets.LOGIN_NEW_PASSWORD }}
 
     environment:
       name: Py-test-auto
