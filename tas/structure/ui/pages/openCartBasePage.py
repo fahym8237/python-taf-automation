@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from typing import Any
+from playwright.sync_api import TimeoutError as PlaywrightTimeoutError
 
 
 @dataclass(frozen=True)
@@ -14,8 +15,13 @@ class OpenCartBasePage:
     @property
     def page(self):
         return self._ctx.page
-    def goto(self, url: str) -> None:
-        self.page.goto(url)
+    def goto(self, url: str):
+        try:
+            self.page.goto(url, wait_until="domcontentloaded", timeout=60000)
+        except PlaywrightTimeoutError:
+            self.page.goto(url, wait_until="commit", timeout=60000)
+
+        self.page.wait_for_load_state("domcontentloaded", timeout=30000)
     def click(self, selector: str) -> None:
         el = self.page.locator(selector).first
         el.click()
