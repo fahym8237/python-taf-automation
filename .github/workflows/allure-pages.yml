@@ -2,7 +2,9 @@ name: Publish Allure Reports
 
 on:
   push:
-    branches: [ "main" ]
+    branches:
+      - main
+      - release/v2.0.1
   workflow_dispatch:
 
 permissions:
@@ -82,7 +84,7 @@ jobs:
         run: |
           mkdir -p target/ui-allure-results
 
-          behave --tags="@ui and @smoke" --no-capture \
+          behave --tags="@trace=REQ-LP-001" --no-capture \
             -D login_url="https://opencart.liveblog365.com/index.php?route=account/login&language=en-gb" \
             -D forgot_url="https://opencart.liveblog365.com/index.php?route=account/forgotten&language=en-gb" \
             -D register_url="https://opencart.liveblog365.com/index.php?route=account/register&language=en-gb" \
