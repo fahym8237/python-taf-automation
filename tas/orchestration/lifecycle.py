@@ -7,6 +7,7 @@ import traceback
 from pathlib import Path
 from typing import Optional
 
+from tas.core.util.runtimeCredentials import RuntimeCredentials
 from tas.orchestration.parallel import get_worker_id, new_run_id
 from tas.orchestration.artifacts import ArtifactManager
 from tas.orchestration.logging import JsonlLogger, LogContext
@@ -89,6 +90,7 @@ class LifecycleManager:
                 "allure_dir": allure_results_dir,
             },
         )
+       
         
 
     def before_scenario(self, behave_context, scenario) -> None:

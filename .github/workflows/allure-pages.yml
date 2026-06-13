@@ -1,0 +1,141 @@
+name: Publish Allure Reports
+
+on:
+  push:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: true
+
+jobs:
+  build-site:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    
+
+    env:
+      LOGIN_PASSWORD: ${{ vars.LOGIN_PASSWORD}}
+      LOGIN_EMAIL: ${{ vars.LOGIN_EMAIL}}
+      LOGIN_NEW_PASSWORD: ${{ vars.LOGIN_NEW_PASSWORD}}
+
+    environment:
+      name: Py-test-auto
+      
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: Set up Java for Allure
+        uses: actions/setup-java@v4
+        with:
+          distribution: "temurin"
+          java-version: "17"
+
+      - name: Install Allure CLI
+        run: |
+          npm install -g allure-commandline
+
+      - name: Install dependencies
+        run: |
+          python -m pip install -U pip
+          pip install -r requirements.txt
+
+      - name: Install Playwright
+        run: |
+          python -m playwright install --with-deps
+
+      - name: Run API smoke with Allure
+        env:
+          API_BASE_URL: https://restful-booker.herokuapp.com
+          API_IGNORE_HTTPS_ERRORS: true
+        run: |
+          mkdir -p target/api-allure-results
+
+          behave --tags="@api and @smoke" --no-capture \
+            -D api_base_url="${API_BASE_URL}" \
+            -D api_ignore_https_errors="${API_IGNORE_HTTPS_ERRORS}" \
+            -f allure_behave.formatter:AllureFormatter \
+            -o target/api-allure-results
+
+      - name: Generate API Allure report
+        run: |
+          allure generate target/api-allure-results --clean -o site/api
+
+      - name: Run UI smoke with Allure
+        env:
+          BROWSER: chromium
+          HEADLESS: true
+        run: |
+          mkdir -p target/ui-allure-results
+
+          behave --tags="@ui and @smoke" --no-capture \
+            -D login_url="https://opencart.liveblog365.com/index.php?route=account/login&language=en-gb" \
+            -D forgot_url="https://opencart.liveblog365.com/index.php?route=account/forgotten&language=en-gb" \
+            -D register_url="https://opencart.liveblog365.com/index.php?route=account/register&language=en-gb" \
+            -D browser="${BROWSER}" \
+            -D headless="${HEADLESS}" \
+            -f allure_behave.formatter:AllureFormatter \
+            -o target/ui-allure-results
+
+      - name: Generate UI Allure report
+        run: |
+          allure generate target/ui-allure-results --clean -o site/ui
+
+      - name: Create landing page
+        run: |
+          cat > site/index.html <<'EOF'
+          <!doctype html>
+          <html lang="en">
+          <head>
+            <meta charset="utf-8">
+            <title>TAS Allure Reports</title>
+            <style>
+              body { font-family: Arial, sans-serif; margin: 40px; background:#0f172a; color:#e2e8f0; }
+              a { color:#60a5fa; font-size: 20px; text-decoration:none; }
+              li { margin: 16px 0; }
+            </style>
+          </head>
+          <body>
+            <h1>TAS Allure Reports</h1>
+            <ul>
+              <li><a href="./api/">API Smoke Report</a></li>
+              <li><a href="./ui/">UI Smoke Report</a></li>
+            </ul>
+          </body>
+          </html>
+          EOF
+
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: site
+
+  deploy:
+    needs: build-site
+    runs-on: ubuntu-latest
+
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
