@@ -27,3 +27,5 @@ Thumbs.db
 # Environment files
 .env
 .env.*
+
+run-ui-tests.sh

@@ -8,8 +8,8 @@ import requests
 from tas.observability.exporters.xray_execution_info import build_default_execution_info
 
 
-XRAY_AUTH_URL = "https://xray.cloud.getxray.app/api/v2/authenticate"
-XRAY_IMPORT_CUCUMBER_MULTIPART_URL = "https://xray.cloud.getxray.app/api/v2/import/execution/cucumber/multipart"
+XRAY_AUTH_URL = "https://eu.xray.cloud.getxray.app/api/v2/authenticate"
+XRAY_IMPORT_CUCUMBER_MULTIPART_URL = "https://eu.xray.cloud.getxray.app/api/v2/import/execution/cucumber/multipart"
 
 
 def require_env(name: str) -> str:
