@@ -66,7 +66,7 @@ def main() -> int:
         client_secret = require_env("XRAY_CLIENT_SECRET")
         project_key = require_env("XRAY_PROJECT_KEY")
 
-        root = Path(sys.argv[1]) if len(sys.argv) > 1 else Path("features/ui")
+        root = Path(sys.argv[1]) if len(sys.argv) > 1 else Path("features/ui/edit_account_page")
         if not root.exists():
             raise RuntimeError(f"Path does not exist: {root}")
 

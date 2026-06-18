@@ -7,16 +7,16 @@ Feature: OpenCart Authentication - Login Page Security
   Background:
     Given the user opens the OpenCart login page
 
-  @PY-LPS-001 @security @trace=REQ-LPS-001
+  @PAS-66 @PY-LPS-001 @security @trace=REQ-LPS-001
   Scenario: Password field masks typed value
     When the user enters a valid login password
     Then the login password field should mask the entered value
 
-  @PY-LPS-002 @security @trace=REQ-LPS-002
+  @PAS-86 @PY-LPS-002 @security @trace=REQ-LPS-002
   Scenario: Login page is served over HTTPS
     Then the login page URL should use HTTPS
 
-  @PY-LPS-003 @security @negative @trace=REQ-LPS-003
+  @PAS-85 @PY-LPS-003 @security @negative @trace=REQ-LPS-003
   Scenario: Login with malicious input values
     When the user enters malicious login email input
     And the user enters malicious login password input
@@ -24,7 +24,7 @@ Feature: OpenCart Authentication - Login Page Security
     Then a login browser Native message should be displayed
     And no PYaScript alert should be displayed
 
-  @PY-LPS-004 @security @negative @trace=REQ-LPS-004
+  @PAS-84 @PY-LPS-004 @security @negative @trace=REQ-LPS-004
   Scenario: Repeated invalid login attempts are handled safely
     When the user submits invalid login credentials multiple times
     Then the login page should remain stable

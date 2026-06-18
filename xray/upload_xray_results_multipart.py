@@ -75,13 +75,13 @@ def main() -> int:
 
         report_path = Path(sys.argv[1]) if len(sys.argv) > 1 else Path("target/xray/cucumber.json")
 
-        run_kind = get_env("XRAY_RUN_KIND", "API Smoke")
-        git_ref = get_env("GIT_REF", "local")
-        build_id = get_env("BUILD_ID", "local-001")
+        run_kind = get_env("XRAY_RUN_KIND", "")
+        git_ref = get_env("GIT_REF", "")
+        build_id = get_env("BUILD_ID", "")
         issue_type = get_env("XRAY_EXECUTION_ISSUE_TYPE", "Test Execution")
 
         # Increment 3 additions
-        labels = parse_labels(get_env("XRAY_LABELS", "tas,api,smoke"))
+        labels = parse_labels(get_env("XRAY_LABELS", ""))
         test_plan_key = get_env("XRAY_TEST_PLAN_KEY", "")
         environment = get_env("XRAY_ENVIRONMENT", "")
 
