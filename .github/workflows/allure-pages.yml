@@ -97,6 +97,7 @@ jobs:
         env:
           XRAY_CLIENT_ID: ${{ secrets.XRAY_CLIENT_ID }}
           XRAY_CLIENT_SECRET: ${{ secrets.XRAY_CLIENT_SECRET }}
+          XRAY_PROJECT_KEY: ${{ secrets.XRAY_PROJECT_KEY}}
         run: |
           if [ -f target/xray/api/cucumber.executed.json ]; then
             python -m xray.upload_xray_results_multipart \
