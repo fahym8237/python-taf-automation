@@ -78,14 +78,7 @@ jobs:
             -D api_ignore_https_errors="${API_IGNORE_HTTPS_ERRORS}" \
             -f allure_behave.formatter:AllureFormatter \
             -o target/api-allure-results
-      - name: Filter executed scenarios for Xray
-        if: always()
-        run: |
-          python xray/filter_xray_cucumber_results.py \
-            target/xray/cucumber.json \
-            target/xray/cucumber.executed.json
-
-            
+          
       - name: Generate API Allure report
         if: always()
         run: |
@@ -107,14 +100,6 @@ jobs:
             -D headless="${HEADLESS}" \
             -f allure_behave.formatter:AllureFormatter \
             -o target/ui-allure-results
-
-
-      - name: Filter executed scenarios for Xray
-        if: always()
-        run: |
-          python xray/filter_xray_cucumber_results.py \
-            target/xray/cucumber.json \
-            target/xray/cucumber.executed.json
 
       
       - name: Generate UI Allure report
