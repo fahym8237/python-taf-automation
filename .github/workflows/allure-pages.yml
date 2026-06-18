@@ -12,7 +12,7 @@ permissions:
   id-token: write
 
 concurrency:
-  group: pages
+  group: "pages"
   cancel-in-progress: true
 
 jobs:
@@ -36,12 +36,12 @@ jobs:
         uses: actions/setup-python@v6
         with:
           python-version: "3.11"
-          cache: pip
+          cache: "pip"
 
       - name: Set up Java for Allure
         uses: actions/setup-java@v4
         with:
-          distribution: temurin
+          distribution: "temurin"
           java-version: "17"
 
       - name: Install Allure CLI
@@ -56,109 +56,70 @@ jobs:
       - name: Install Playwright
         run: |
           python -m playwright install --with-deps
-
+      
       - name: Validate login credentials
         run: |
           test -n "$LOGIN_EMAIL" || (echo "LOGIN_EMAIL is missing" && exit 1)
           test -n "$LOGIN_PASSWORD" || (echo "LOGIN_PASSWORD is missing" && exit 1)
           test -n "$LOGIN_NEW_PASSWORD" || (echo "LOGIN_NEW_PASSWORD is missing" && exit 1)
           echo "Login credentials are configured"
-          rm -rf target site
+          rm -rf target
 
-      - name: Run API smoke with Allure and Xray JSON
+      - name: Run API smoke with Allure
         continue-on-error: true
         env:
           API_BASE_URL: https://restful-booker.herokuapp.com
-          API_IGNORE_HTTPS_ERRORS: "true"
+          API_IGNORE_HTTPS_ERRORS: true
         run: |
-          mkdir -p target/api-allure-results target/xray/api
+          mkdir -p target/api-allure-results
 
           behave --tags="@api and @smoke" --no-capture \
             -D api_base_url="${API_BASE_URL}" \
             -D api_ignore_https_errors="${API_IGNORE_HTTPS_ERRORS}" \
-            -f json.pretty \
-            -o target/xray/api/cucumber.json \
             -f allure_behave.formatter:AllureFormatter \
             -o target/api-allure-results
-
-      - name: Filter API scenarios for Xray
+      - name: Filter executed scenarios for Xray
         if: always()
         run: |
-          if [ -f target/xray/api/cucumber.json ]; then
-            python xray/filter_xray_cucumber_results.py \
-              target/xray/api/cucumber.json \
-              target/xray/api/cucumber.executed.json
-          else
-            echo "API cucumber.json not found, skipping Xray filter"
-          fi
+          python xray/filter_xray_cucumber_results.py \
+            target/xray/cucumber.json \
+            target/xray/cucumber.executed.json
 
-      - name: Upload API execution to Xray
-        if: always()
-        env:
-          XRAY_CLIENT_ID: ${{ secrets.XRAY_CLIENT_ID }}
-          XRAY_CLIENT_SECRET: ${{ secrets.XRAY_CLIENT_SECRET }}
-          XRAY_PROJECT_KEY: ${{ secrets.XRAY_PROJECT_KEY}}
-        run: |
-          if [ -f target/xray/api/cucumber.executed.json ]; then
-            python -m xray.upload_xray_results_multipart \
-              target/xray/api/cucumber.executed.json
-          else
-            echo "API executed Xray file not found, skipping upload"
-          fi
-
+            
       - name: Generate API Allure report
         if: always()
         run: |
-          mkdir -p site
           allure generate target/api-allure-results --clean -o site/api || true
 
-      - name: Run UI smoke with Allure and Xray JSON
+      - name: Run UI smoke with Allure
         continue-on-error: true
         env:
           BROWSER: chromium
-          HEADLESS: "true"
+          HEADLESS: true
         run: |
-          mkdir -p target/ui-allure-results target/xray/ui
+          mkdir -p target/ui-allure-results
 
-          behave --tags="@login_page and @session" --no-capture \
+          behave --tags="@ui" --no-capture \
             -D login_url="https://opencart.liveblog365.com/index.php?route=account/login&language=en-gb" \
             -D forgot_url="https://opencart.liveblog365.com/index.php?route=account/forgotten&language=en-gb" \
             -D register_url="https://opencart.liveblog365.com/index.php?route=account/register&language=en-gb" \
             -D browser="${BROWSER}" \
             -D headless="${HEADLESS}" \
-            -f json.pretty \
-            -o target/xray/ui/cucumber.json \
             -f allure_behave.formatter:AllureFormatter \
             -o target/ui-allure-results
 
-      - name: Filter UI scenarios for Xray
+
+      - name: Filter executed scenarios for Xray
         if: always()
         run: |
-          if [ -f target/xray/ui/cucumber.json ]; then
-            python xray/filter_xray_cucumber_results.py \
-              target/xray/ui/cucumber.json \
-              target/xray/ui/cucumber.executed.json
-          else
-            echo "UI cucumber.json not found, skipping Xray filter"
-          fi
+          python xray/filter_xray_cucumber_results.py \
+            target/xray/cucumber.json \
+            target/xray/cucumber.executed.json
 
-      - name: Upload UI execution to Xray
-        if: always()
-        env:
-          XRAY_CLIENT_ID: ${{ secrets.XRAY_CLIENT_ID }}
-          XRAY_CLIENT_SECRET: ${{ secrets.XRAY_CLIENT_SECRET }}
-        run: |
-          if [ -f target/xray/ui/cucumber.executed.json ]; then
-            python -m xray.upload_xray_results_multipart \
-              target/xray/ui/cucumber.executed.json
-          else
-            echo "UI executed Xray file not found, skipping upload"
-          fi
-
+      
       - name: Generate UI Allure report
         if: always()
         run: |
-          mkdir -p site
           allure generate target/ui-allure-results --clean -o site/ui || true
 
       - name: Create landing page
